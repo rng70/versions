@@ -1,18 +1,18 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/********************************************************************************************************
+*                                                                                                       *
+* OPENREFACTORY CONFIDENTIAL                                                                            *
+* --------------------------                                                                            *
+*                                                                                                       *
+* Copyright (c) 2025 OpenRefactory, Inc. All Rights Reserved.                                           *
+*                                                                                                       *
+* NOTICE: All information contained herein is, and remains the property of OpenRefactory, Inc. The      *
+* intellectual and technical concepts contained herein are proprietary to OpenRefactory, Inc. and       *
+* may be covered by U.S. and Foreign Patents, patents in process, and are protected by trade secret     *
+* or copyright law. Dissemination of this information or reproduction of this material is strictly      *
+* forbidden unless prior written permission is obtained from OpenRefactory, Inc.                        *
+*                                                                                                       *
+* Contributors: Al Arafat Tanin (OpenRefactory, Inc.)                                                   *
+*********************************************************************************************************/
 
 package resolver
 

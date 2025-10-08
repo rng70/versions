@@ -306,7 +306,6 @@ func SortVersions(versions []*Version, descending ...bool) {
 	desc := false
 	if len(descending) > 0 && descending[0] {
 		desc = descending[0]
-		fmt.Println("Found reverse", desc)
 	}
 
 	sort.Slice(versions, func(i, j int) bool {

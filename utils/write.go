@@ -9,7 +9,7 @@ import (
 	"github.com/rng70/versions/canonicalized"
 )
 
-func WriteToFile(filename string, out []*canonicalized.Version) error {
+func WriteToFile(filename string, out any) error {
 	err := os.MkdirAll(filepath.Dir(filename), 0755)
 	if err != nil {
 		fmt.Println("Error creating directories:", err)

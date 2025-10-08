@@ -1,5 +1,10 @@
 package utils
 
+var SingleTestList = []string{
+	"1.2.2.1-jre17",
+	"1.2.2.1",
+}
+
 var MinimalList = []string{
 	"v1.0.0",
 	"2",

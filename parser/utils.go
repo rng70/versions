@@ -1,20 +1,4 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-package resolver
+package parser
 
 import (
 	"fmt"
@@ -23,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/rng70/versions/canonicalized"
+	"github.com/rng70/versions/vars"
 )
 
 /* ****************** Legacy utils ****************** */
@@ -70,7 +55,31 @@ func ensureThree(v string) string {
 	return fmt.Sprintf("%d.%d.%d", nums[0], nums[1], nums[2])
 }
 
-func filterMatches(parsed [][]Constraint, versions []string) []string {
+func isNumericVersion(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if !(r == '.' || (r >= '0' && r <= '9')) {
+			return false
+		}
+	}
+	return true
+}
+
+// Expand "==1.2.*" into >=1.2.0 <1.3.0
+func pyExpandWildcardEq(v string) []vars.Constraint {
+	if strings.HasSuffix(v, ".*") {
+		base := strings.TrimSuffix(v, ".*")
+		nums := splitVersionNums(base)
+		lower := fmt.Sprintf("%d.%d.0", nums[0], nums[1])
+		upper := fmt.Sprintf("%d.%d.0", nums[0], nums[1]+1)
+		return []vars.Constraint{{Op: ">=", Ver: ensureThree(lower)}, {Op: "<", Ver: ensureThree(upper)}}
+	}
+	return []vars.Constraint{{Op: "=", Ver: ensureThree(v)}}
+}
+
+func FilterMatches(parsed [][]vars.Constraint, versions []string) []string {
 	var out []string
 	for _, v := range versions {
 		for _, group := range parsed {
@@ -83,7 +92,7 @@ func filterMatches(parsed [][]Constraint, versions []string) []string {
 	return out
 }
 
-func legacySatisfiesOne(v string, ands []Constraint) bool {
+func legacySatisfiesOne(v string, ands []vars.Constraint) bool {
 	// If any constraint is "latest", it only matches literal "latest"
 	for _, c := range ands {
 		if c.Ver == "latest" {
@@ -128,7 +137,7 @@ func legacySatisfiesOne(v string, ands []Constraint) bool {
 	return true
 }
 
-func satisfiesOne(v string, ands []Constraint) bool {
+func satisfiesOne(v string, ands []vars.Constraint) bool {
 	// If any constraint is "latest", it only matches literal "latest"
 	for _, c := range ands {
 		if c.Ver == "latest" {

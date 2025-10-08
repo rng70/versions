@@ -2,31 +2,20 @@ package semver
 
 import "github.com/rng70/versions/canonicalized"
 
-type Version struct {
-	Original string                `json:"original_version_string"`
-	Parsed   canonicalized.Version `json:"parsed_version_string"`
-}
-
-func NewVersionFromList(versions []string) []Version {
-	var version []Version
+func NewVersionFromList(versions []string) []*canonicalized.Version {
+	var version []*canonicalized.Version
 
 	for _, s := range versions {
-		p := canonicalized.ParseVersionString(s)
+		p := NewVersion(s)
 
-		version = append(version, Version{
-			Original: s,
-			Parsed:   p,
-		})
+		version = append(version, &p)
 	}
 
 	return version
 }
 
-func NewVersion(s string) Version {
+func NewVersion(s string) canonicalized.Version {
 	p := canonicalized.ParseVersionString(s)
 
-	return Version{
-		Original: s,
-		Parsed:   p,
-	}
+	return p
 }

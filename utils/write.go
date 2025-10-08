@@ -4,11 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
-	"github.com/rng70/versions/semver"
+	"github.com/rng70/versions/canonicalized"
 )
 
-func WriteToFile(filename string, out []semver.Version) error {
+func WriteToFile(filename string, out []*canonicalized.Version) error {
+	err := os.MkdirAll(filepath.Dir(filename), 0755)
+	if err != nil {
+		fmt.Println("Error creating directories:", err)
+		return err
+	}
+
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -31,7 +38,13 @@ func WriteToFile(filename string, out []semver.Version) error {
 	return err
 }
 
-func WriteToFileWithMinimalContext(filename string, out []semver.Version) error {
+func WriteToFileWithMinimalContext(filename string, out []*canonicalized.Version) error {
+	err := os.MkdirAll(filepath.Dir(filename), 0755)
+	if err != nil {
+		fmt.Println("Error creating directories:", err)
+		return err
+	}
+
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)

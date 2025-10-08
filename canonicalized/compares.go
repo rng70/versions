@@ -28,10 +28,11 @@ func (v *Version) Compare(other *Version) int {
 	if vPre && !oPre {
 		return -1
 	}
-	if !vPre && oPre {
-		return 1
-	}
-	if !vPre && !oPre {
+	if !vPre {
+		if oPre {
+			return 1
+		}
+
 		return 0
 	}
 
@@ -301,10 +302,11 @@ func toPreIdents(v *Version) []ident {
 
 func i64(v int64) *int64 { return &v }
 
-func SortVersions(versions []*Version, reverse ...bool) {
+func SortVersions(versions []*Version, descending ...bool) {
 	desc := false
-	if len(reverse) > 0 && reverse[0] {
-		desc = true
+	if len(descending) > 0 && descending[0] {
+		desc = descending[0]
+		fmt.Println("Found reverse", desc)
 	}
 
 	sort.Slice(versions, func(i, j int) bool {

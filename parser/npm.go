@@ -49,7 +49,6 @@ func expandWildcardNpm(ver string) []vars.Constraint {
 }
 
 func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
-	fmt.Println("=================================================")
 	s = strings.TrimSpace(s)
 
 	// special literal: latest
@@ -83,16 +82,13 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 
 	// OR blocks
 	blocks := strings.Split(s, "||")
-	fmt.Println("Blocks: ", blocks)
 	var out [][]vars.Constraint
 	for _, b := range blocks {
-		fmt.Println("Block: ", b)
 		b = strings.TrimSpace(b)
 		if b == "" {
 			continue
 		}
 		matches := vars.ReNpmToken.FindAllStringSubmatch(b, -1)
-		fmt.Print("For block ", b, " matches: ", matches, "\n")
 		if matches == nil || len(matches) == 0 {
 			continue
 		}
@@ -101,7 +97,6 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 			// m[1] = operator (optional), m[2] = token
 			op := strings.TrimSpace(m[1])
 			token := strings.TrimSpace(m[2])
-			fmt.Println("For match:", m, " op:", op, " token:", token)
 			if token == "" {
 				continue
 			}

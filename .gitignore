@@ -35,3 +35,5 @@ go.work.sum
 *.json
 
 testdata/
+gopybridge/
+Makefile

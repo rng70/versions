@@ -17,18 +17,13 @@ func ParsePython(s string) [][]vars.Constraint {
 		return [][]vars.Constraint{}
 	}
 	parts := strings.Split(s, ",")
-	fmt.Println("=================================================")
-	fmt.Println("Original:", s)
-	fmt.Println("Parts:", parts)
 	var ands []vars.Constraint
 	for _, part := range parts {
-		fmt.Println("Each part: ", part)
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
 		}
 		m := vars.RePyPart.FindStringSubmatch(part)
-		fmt.Println("For each part match:", m)
 		if m == nil {
 			continue
 		}

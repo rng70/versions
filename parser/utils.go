@@ -146,7 +146,9 @@ func satisfiesOne(v string, ands []vars.Constraint) bool {
 	}
 
 	canonicalizedV := canonicalized.NewVersion(v)
+
 	// Check numeric constraints
+	result := true
 	for _, c := range ands {
 		// if constraint value is not numeric-like, fail (except "latest" handled above)
 		if c.Ver == "" {
@@ -156,22 +158,23 @@ func satisfiesOne(v string, ands []vars.Constraint) bool {
 		canonicalizedC := canonicalized.NewVersion(c.Ver)
 		switch c.Op {
 		case "=":
-			return canonicalizedV.Equal(&canonicalizedC)
+			result = result && canonicalizedV.Equal(&canonicalizedC)
 		case "!=":
-			return !canonicalizedV.Equal(&canonicalizedC)
+			result = result && !canonicalizedV.Equal(&canonicalizedC)
 		case "<":
-			return canonicalizedV.LessThan(&canonicalizedC)
+			result = result && canonicalizedV.LessThan(&canonicalizedC)
 		case "<=":
-			return canonicalizedV.LessThanOrEqual(&canonicalizedC)
+			result = result && canonicalizedV.LessThanOrEqual(&canonicalizedC)
 		case ">":
-			return canonicalizedV.GreaterThan(&canonicalizedC)
+			result = result && canonicalizedV.GreaterThan(&canonicalizedC)
 		case ">=":
-			canonicalizedV.GreaterThanOrEqual(&canonicalizedC)
+			result = result && canonicalizedV.GreaterThanOrEqual(&canonicalizedC)
 		default:
-			return false
+			result = result && false
 		}
 	}
-	return true
+
+	return result
 }
 
 func splitVersionNums(v string) []int {
@@ -218,6 +221,6 @@ func SplitRequirement(req string) (string, string) {
 
 func StringToInteger(s string) int {
 	var n int
-	fmt.Sscanf(s, "%d", &n)
+	_, _ = fmt.Sscanf(s, "%d", &n)
 	return n
 }

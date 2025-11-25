@@ -20,4 +20,7 @@ func main() {
 
 	// ************ NuGet Test ************ //
 	resolver.NuGetStyleTest()
+
+	// *********** Random Test ************ //
+	resolver.RandomTest()
 }

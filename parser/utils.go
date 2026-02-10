@@ -13,7 +13,7 @@ import (
 /* ****************** Legacy utils ****************** */
 
 func inc(version string, part string) string {
-	nums := splitVersionNums(version)
+	nums := splitVersionNumsLegacy(version)
 	switch part {
 	case "major":
 		return fmt.Sprintf("%d.0.0", nums[0]+1)
@@ -27,8 +27,8 @@ func inc(version string, part string) string {
 }
 
 func legacyCmpVersion(a, b string) int {
-	aa := splitVersionNums(a)
-	bb := splitVersionNums(b)
+	aa := splitVersionNumsLegacy(a)
+	bb := splitVersionNumsLegacy(b)
 	n := len(aa)
 	if len(bb) > n {
 		n = len(bb)
@@ -51,8 +51,13 @@ func legacyCmpVersion(a, b string) int {
 }
 
 func ensureThree(v string) string {
-	nums := splitVersionNums(v)
-	return fmt.Sprintf("%d.%d.%d", nums[0], nums[1], nums[2])
+	nums, suffix := splitVersionNums(v)
+	base := fmt.Sprintf("%d.%d.%d", nums[0], nums[1], nums[2])
+
+	if suffix != "" {
+		return base + suffix
+	}
+	return base
 }
 
 func isNumericVersion(s string) bool {
@@ -71,7 +76,7 @@ func isNumericVersion(s string) bool {
 func pyExpandWildcardEq(v string) []vars.Constraint {
 	if strings.HasSuffix(v, ".*") {
 		base := strings.TrimSuffix(v, ".*")
-		nums := splitVersionNums(base)
+		nums := splitVersionNumsLegacy(base)
 		lower := fmt.Sprintf("%d.%d.0", nums[0], nums[1])
 		upper := fmt.Sprintf("%d.%d.0", nums[0], nums[1]+1)
 		return []vars.Constraint{{Op: ">=", Ver: ensureThree(lower)}, {Op: "<", Ver: ensureThree(upper)}}
@@ -177,7 +182,7 @@ func satisfiesOne(v string, ands []vars.Constraint) bool {
 	return result
 }
 
-func splitVersionNums(v string) []int {
+func splitVersionNumsLegacy(v string) []int {
 	// remove pre-release or build metadata, keep numeric prefix runs
 	v = strings.SplitN(v, "-", 2)[0]
 	v = strings.SplitN(v, "+", 2)[0]
@@ -204,6 +209,65 @@ func splitVersionNums(v string) []int {
 		nums = append(nums, 0)
 	}
 	return nums
+}
+
+func splitVersionNums(v string) ([]int, string) {
+	original := v
+
+	// Strip build metadata (+...)
+	if i := strings.Index(v, "+"); i != -1 {
+		v = v[:i]
+	}
+
+	// Capture suffix after third numeric segment
+	suffix := ""
+
+	parts := strings.Split(v, ".")
+	nums := make([]int, 0, 3)
+
+	for idx, p := range parts {
+		if len(nums) == 3 {
+			// Everything after 3rd numeric part becomes suffix
+			suffix = "." + strings.Join(parts[idx:], ".")
+			break
+		}
+
+		if p == "" {
+			nums = append(nums, 0)
+			continue
+		}
+
+		i := 0
+		for i < len(p) && p[i] >= '0' && p[i] <= '9' {
+			i++
+		}
+
+		if i == 0 {
+			nums = append(nums, 0)
+			continue
+		}
+
+		n, _ := strconv.Atoi(p[:i])
+		nums = append(nums, n)
+
+		// Capture inline suffix like 3Final
+		if i < len(p) {
+			suffix = p[i:]
+			break
+		}
+	}
+
+	// Pad missing numeric components
+	for len(nums) < 3 {
+		nums = append(nums, 0)
+	}
+
+	// Restore original suffix if nothing detected
+	if suffix == "" && original != v {
+		suffix = original[len(v):]
+	}
+
+	return nums, suffix
 }
 
 /* ****************** Legacy utils ****************** */

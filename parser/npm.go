@@ -133,7 +133,7 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 				ands = append(ands, vars.Constraint{Op: "<", Ver: inc(lower, "minor")})
 			case "^":
 				// caret semantics:
-				nums := splitVersionNums(token)
+				nums := splitVersionNumsLegacy(token)
 				lower := ensureThree(token)
 				var upper string
 				if nums[0] > 0 {

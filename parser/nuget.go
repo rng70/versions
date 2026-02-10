@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/rng70/versions/vars"
@@ -11,9 +12,98 @@ import (
 /*     NuGet (C#) parser     */
 /* ------------------------- */
 
+var (
+	rangePattern = regexp.MustCompile(
+		`^(\[|\()\s*[^,]*\s*,\s*[^,\]]*\s*(\]|\))$`,
+	)
+
+	singleConstraintPattern = regexp.MustCompile(
+		`^(<=|>=|<|>|=)\s*([0-9]+(?:\.[0-9]+)*)$`,
+	)
+)
+
+type bound struct {
+	version   string
+	inclusive bool
+}
+
+func ConstraintToRange(input string) (string, error) {
+	input = strings.TrimSpace(input)
+
+	if rangePattern.MatchString(input) {
+		return input, nil
+	}
+
+	parts := splitConstraints(input)
+
+	var lower *bound
+	var upper *bound
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+
+		m := singleConstraintPattern.FindStringSubmatch(part)
+		if m == nil {
+			return "", fmt.Errorf("unsupported constraint format: %s", input)
+		}
+
+		op := m[1]
+		version := m[2]
+
+		switch op {
+		case ">":
+			lower = &bound{version, false}
+		case ">=":
+			lower = &bound{version, true}
+		case "<":
+			upper = &bound{version, false}
+		case "<=":
+			upper = &bound{version, true}
+		case "=":
+			lower = &bound{version, true}
+			upper = &bound{version, true}
+		}
+	}
+
+	return buildRange(lower, upper), nil
+}
+
+func splitConstraints(input string) []string {
+	// supports: ">1.0,<2.0" and ">1.0, <2.0"
+	return strings.Split(input, ",")
+}
+
+func buildRange(lower, upper *bound) string {
+	leftBracket := "("
+	rightBracket := ")"
+
+	leftVersion := ""
+	rightVersion := ""
+
+	if lower != nil {
+		leftVersion = lower.version
+		if lower.inclusive {
+			leftBracket = "["
+		}
+	} else {
+		leftBracket = "["
+	}
+
+	if upper != nil {
+		rightVersion = upper.version
+		if upper.inclusive {
+			rightBracket = "]"
+		}
+	} else {
+		rightBracket = "]"
+	}
+
+	return fmt.Sprintf("%s%s, %s%s", leftBracket, leftVersion, rightVersion, rightBracket)
+}
+
 func ParseNuGet(s string) [][]vars.Constraint {
-	s = strings.TrimSpace(s)
-	if s == "" {
+	s, err := ConstraintToRange(strings.TrimSpace(s))
+	if s == "" || err != nil {
 		return [][]vars.Constraint{}
 	}
 	// bracket range
@@ -42,7 +132,7 @@ func ParseNuGet(s string) [][]vars.Constraint {
 	// floating versions like 1.* or 1.2.*
 	if strings.HasSuffix(s, ".*") {
 		base := strings.TrimSuffix(s, ".*")
-		nums := splitVersionNums(base)
+		nums := splitVersionNumsLegacy(base)
 		if strings.Count(base, ".") == 0 {
 			lower := fmt.Sprintf("%d.0.0", nums[0])
 			upper := fmt.Sprintf("%d.0.0", nums[0]+1)

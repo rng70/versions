@@ -42,7 +42,7 @@ func ParsePython(s string) [][]vars.Constraint {
 			// compatible release operator
 			// ~=1.4 -> >=1.4,<2.0
 			// ~=1.4.5 -> >=1.4.5,<1.5.0
-			nums := splitVersionNums(val)
+			nums := splitVersionNumsLegacy(val)
 			lower := ensureThree(val)
 			var upper string
 			if strings.Count(val, ".") == 1 {

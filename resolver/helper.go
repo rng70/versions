@@ -20,6 +20,7 @@ func NPMStyleTest() {
 		"latest",
 		"npm:pkg@1.0.0",
 		"http://npmjs.com/example.tar.gz",
+		">=4.2.0.Alpha1, <4.2.3.Final",
 	}
 
 	fmt.Println("=== NPM ===")
@@ -47,6 +48,8 @@ func PythonStyleTestHelper() {
 		"!=2.3.1,>=1.0.0,<3.0.0",
 		"2.3.1",
 		">=1.2.0.1",
+		">= 6.30.0rc1, <= 6.33.4",
+		"< 5.29.6",
 	}
 
 	fmt.Println("\n=== Python (requirements.txt style) ===")
@@ -65,6 +68,8 @@ func NuGetStyleTest() {
 		"1.*",
 		"1.2.*",
 		"2.3.1",
+		"<13.0.1",
+		">11.0.1, <13.0.1",
 	}
 
 	fmt.Println("\n=== NuGet (C#) ===")

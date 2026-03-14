@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import io
 import os
 
-# Safely read the long description from README.md
+
 def read_long_description():
     readme_path = os.path.join(os.path.dirname(__file__), "README.md")
     try:
@@ -11,9 +11,10 @@ def read_long_description():
     except FileNotFoundError:
         return ""
 
+
 setup(
     name="semverish",
-    version="1.0.0",
+    version="2.0.0",
     author="Al Arafat Tanin",
     author_email="arafat.rng70@gmail.com",
     description=(
@@ -26,6 +27,7 @@ setup(
     project_urls={
         "Bug Tracker": "https://github.com/rng70/versions/issues",
         "Source": "https://github.com/rng70/versions",
+        "Changelog": "https://github.com/rng70/versions/releases",
     },
     license="MIT",
     classifiers=[
@@ -33,10 +35,17 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Go",
         "Operating System :: POSIX :: Linux",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Version Control",
     ],
+    keywords="semver version sorting constraints npm pypi nuget maven",
     packages=find_packages(exclude=("tests*", "docs*")),
     include_package_data=True,
     package_data={

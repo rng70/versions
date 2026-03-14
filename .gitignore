@@ -39,5 +39,5 @@ gopybridge/
 Makefile
 
 # Compiled binaries (project-specific)
-semverish
-versions
+/semverish
+/versions

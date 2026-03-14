@@ -11,7 +11,8 @@ import (
 // semver-ish with at least one dot, with optional leading v
 var (
 	// find core like v?X.Y(.Z){0,2}
-	reCoreWithDot = regexp.MustCompile(`(?i)\d+\.\d+(?:\.\d+){0,2}`)
+	reCoreWithDot        = regexp.MustCompile(`(?i)\d+\.\d+(?:\.\d+){0,2}`)
+	reCoreWithUnderscore = regexp.MustCompile(`(?i)\d+_\d+(?:_\d+){0,2}`)
 	//reCoreWithDotWithV  = regexp.MustCompile(`(?i)v?\d+\.\d+(?:\.\d+){0,2}`)
 	reCorePureInt = regexp.MustCompile(`(?i)^(?:v)?\d+$`)
 	//reGitDescribeNum    = regexp.MustCompile(`-([0-9]+)-g([0-9a-f]{7,40})`)
@@ -101,6 +102,13 @@ func findCoreIndex(s string) (start, end int, core string, hasDot bool) {
 	loc := reCoreWithDot.FindStringIndex(s)
 	if loc != nil {
 		return loc[0], loc[1], s[loc[0]:loc[1]], true
+	}
+
+	// Try underscore-separated numeric core (e.g. "COMMON_LANG_3_0_1" → core "3.0.1")
+	loc = reCoreWithUnderscore.FindStringIndex(s)
+	if loc != nil {
+		core = strings.ReplaceAll(s[loc[0]:loc[1]], "_", ".")
+		return loc[0], loc[1], core, true
 	}
 
 	// Fallback: accept lone v<digits> or <digits> as core only if the whole string (after trimming prefix) starts with it

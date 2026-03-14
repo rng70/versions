@@ -170,6 +170,11 @@ func ParseVersionString(s string) Version {
 		}
 	}
 
+	if pv.Revision == nil {
+		var zero int64 = 0
+		pv.Revision = &zero
+	}
+
 	// build part: already preserved whole build as BuildMetadata with leading '+'
 	// but also analyze build tokens for timestamps and hashes and attach them
 	if build != "" {
@@ -242,8 +247,14 @@ func ParseVersionString(s string) Version {
 			}
 		}
 	}
-	if len(preTokens) == 0 && pv.Revision != nil {
+	if len(preTokens) == 0 && pv.Revision != nil && *pv.Revision != 0 {
 		preTokens = append(preTokens, fmt.Sprintf("%d", *pv.Revision))
+	}
+	// Include intermediate prerelease numeric tokens (not build metadata starting with '+')
+	for _, m := range pv.Metadata {
+		if !strings.HasPrefix(m.Tag, "+") {
+			preTokens = append(preTokens, m.Tag)
+		}
 	}
 	if pv.Extra != nil {
 		preTokens = append(preTokens, fmt.Sprintf("%d", *pv.Extra))

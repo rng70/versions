@@ -304,14 +304,18 @@ func i64(v int64) *int64 { return &v }
 
 func SortVersions(versions []*Version, descending ...bool) {
 	desc := false
-	if len(descending) > 0 && descending[0] {
+	if len(descending) > 0 {
 		desc = descending[0]
 	}
 
-	sort.Slice(versions, func(i, j int) bool {
-		if desc {
-			return versions[i].GreaterThan(versions[j])
+	sort.SliceStable(versions, func(i, j int) bool {
+		vi, vj := versions[i], versions[j]
+		if vi == nil || vj == nil {
+			return vi == nil && vj != nil
 		}
-		return versions[i].LessThan(versions[j])
+		if desc {
+			return vi.GreaterThan(vj)
+		}
+		return vi.LessThan(vj)
 	})
 }

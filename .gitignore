@@ -37,3 +37,7 @@ go.work.sum
 testdata/
 gopybridge/
 Makefile
+
+# Compiled binaries (project-specific)
+semverish
+versions

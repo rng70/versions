@@ -1,4 +1,3 @@
-#.idea/
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
@@ -32,11 +31,21 @@ go.work.sum
 .idea/
 .vscode/
 
+# Claude Code working directory
+.claude/
+
 *.json
 
 testdata/
-gopybridge/
 Makefile
+
+# gopybridge build artifacts (source is tracked; these are generated)
+gopybridge/dist/
+gopybridge/semverish.egg-info/
+gopybridge/semverish/libpyversions.so
+gopybridge/semverish/libpyversions.h
+gopybridge/semverish/__pycache__/
+gopybridge/**/*.pyc
 
 # Compiled binaries (project-specific)
 /semverish

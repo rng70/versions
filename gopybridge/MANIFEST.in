@@ -1,2 +1,2 @@
-include pyversions/libpyversions.so
+include semverish/libpyversions.so
 include README.md

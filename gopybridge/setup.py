@@ -17,7 +17,7 @@ setup(
     author="Al Arafat Tanin",
     author_email="arafat.rng70@gmail.com",
     description=(
-        "Python wrapper around Go module `github.com/rng70/versions` "
+        "Python wrapper around Go module `github.com/rng70/versions/v2` "
         "for parsing and sorting semver and non-semver-ish versions and constraints."
     ),
     long_description=read_long_description(),

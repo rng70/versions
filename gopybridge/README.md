@@ -1,13 +1,13 @@
 # semverish
 
-`semverish` is a Python package that exposes the core functionality of the Go library [`github.com/rng70/versions`](https://github.com/rng70/versions) to Python — via a CGo-compiled shared library loaded at runtime through [CFFI](https://cffi.readthedocs.io/).
+`semverish` is a Python package that exposes the core functionality of the Go library [`github.com/rng70/versions/v2`](https://github.com/rng70/versions) to Python — via a CGo-compiled shared library loaded at runtime through [CFFI](https://cffi.readthedocs.io/).
 
 It handles version sorting and constraint resolution across multiple package ecosystems, including cases where versions do not follow strict semver (e.g. epoch prefixes, timestamps, commit hashes, pre-release labels with non-standard separators).
 
 ## How it works
 
 ```
-Python (cffi)  →  libpyversions.so  (CGo)  →  github.com/rng70/versions  (Go)
+Python (cffi)  →  libpyversions.so  (CGo)  →  github.com/rng70/versions/v2  (Go)
 ```
 
 The `gopybridge/semverish/bridge.go` file is compiled into a C shared library (`libpyversions.so`) using `go build -buildmode=c-shared`. The Python module loads this `.so` at import time via CFFI and calls the exported C functions directly.
@@ -78,7 +78,7 @@ semverish.analyze_constraints(
 
 ### `natural_sorted_versions(versions, descending=False, safe_parse=True) -> list[str]`
 
-Sorts a list of version strings using the ecosystem-agnostic comparison engine from `github.com/rng70/versions`.
+Sorts a list of version strings using the ecosystem-agnostic comparison engine from `github.com/rng70/versions/v2`.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|

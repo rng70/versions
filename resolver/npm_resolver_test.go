@@ -3,7 +3,7 @@ package resolver
 import (
 	"testing"
 
-	"github.com/rng70/versions/vars"
+	"github.com/rng70/versions/v2/vars"
 )
 
 func TestNPM_WildcardMinor(t *testing.T) {

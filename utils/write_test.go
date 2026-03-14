@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/rng70/versions/canonicalized"
+	"github.com/rng70/versions/v2/canonicalized"
 )
 
 // ─── WriteToFile ──────────────────────────────────────────────────────────────

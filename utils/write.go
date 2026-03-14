@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rng70/versions/canonicalized"
+	"github.com/rng70/versions/v2/canonicalized"
 )
 
 func generateJsonEncoder(filename string) (*json.Encoder, *os.File, error) {

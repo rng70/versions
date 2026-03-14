@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rng70/versions/canonicalized"
-	"github.com/rng70/versions/semver"
+	"github.com/rng70/versions/v2/canonicalized"
+	"github.com/rng70/versions/v2/semver"
 )
 
 // ─── helpers ──────────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/rng70/versions/vars"
+	"github.com/rng70/versions/v2/vars"
 )
 
 // assertParsedCount checks that the constraint string was parsed into the

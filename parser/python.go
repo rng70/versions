@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rng70/versions/vars"
+	"github.com/rng70/versions/v2/vars"
 )
 
 /* ------------------------- */

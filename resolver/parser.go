@@ -3,8 +3,8 @@ package resolver
 import (
 	"errors"
 
-	"github.com/rng70/versions/parser"
-	"github.com/rng70/versions/vars"
+	"github.com/rng70/versions/v2/parser"
+	"github.com/rng70/versions/v2/vars"
 )
 
 func AnalyzeConstraint(style vars.Style, constraint string, versions []string) vars.Analysis {

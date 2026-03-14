@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rng70/versions/canonicalized"
-	"github.com/rng70/versions/vars"
+	"github.com/rng70/versions/v2/canonicalized"
+	"github.com/rng70/versions/v2/vars"
 )
 
 /* ****************** Legacy utils ****************** */

@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 
-	"github.com/rng70/versions/resolver"
-	"github.com/rng70/versions/semver"
-	"github.com/rng70/versions/vars"
+	"github.com/rng70/versions/v2/resolver"
+	"github.com/rng70/versions/v2/semver"
+	"github.com/rng70/versions/v2/vars"
 )
 
 // naturalSortedVersions is the pure-Go core of NaturalSortedVersions.

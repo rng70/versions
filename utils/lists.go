@@ -351,7 +351,7 @@ var FullList = []string{
 	"0.2.3-docs-yank",
 	"0.2.3-docs-yank.2",
 	"0.1.2-docfix",
-	"1.4.0+zstd.1.3.2",
+	"1.4.0+std.1.3.2",
 	"0.51.1-oldsyn",
 	"1.0.12-staging-1.1.0-pre.0",
 	"0.5.20+deprecated",

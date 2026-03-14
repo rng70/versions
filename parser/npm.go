@@ -48,36 +48,34 @@ func expandWildcardNpm(ver string) []vars.Constraint {
 	return []vars.Constraint{{Op: "=", Ver: ver}}
 }
 
-func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
+func ParseNPM(s string) ([][]vars.Constraint, error) {
 	s = strings.TrimSpace(s)
 
 	// special literal: latest
 	if s == "latest" {
-		return [][]vars.Constraint{{{Op: "=", Ver: "latest"}}}, []string{"latest"}, true
+		return [][]vars.Constraint{{{Op: "=", Ver: "latest"}}}, nil
 	}
 
-	// npm:pkg@1.0.0 -> extract version and return parsed + matches with that version
+	// npm:pkg@1.0.0 -> extract version
 	if strings.HasPrefix(s, "npm:") {
 		at := strings.LastIndex(s, "@")
 		if at > -1 && at+1 < len(s) {
 			ver := s[at+1:]
-			// return parsed constraint and the version itself as the match (per user's request)
-			return [][]vars.Constraint{{{Op: "=", Ver: ver}}}, []string{ver}, true
+			return [][]vars.Constraint{{{Op: "=", Ver: ver}}}, nil
 		}
-		// malformed -> no parse
-		return [][]vars.Constraint{}, []string{}, true
+		return [][]vars.Constraint{}, nil
 	}
 
 	// ignore http/file sources
 	if strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "file:") {
-		return nil, nil, false
+		return nil, vars.ErrUnsupportedSource
 	}
 
 	// dash range
 	if m := vars.ReDashRange.FindStringSubmatch(s); m != nil {
-		l := ensureThree(m[1])
-		h := ensureThree(m[2])
-		return [][]vars.Constraint{{{Op: ">=", Ver: l}, {Op: "<=", Ver: h}}}, nil, true
+		l := ensureThreePrerelease(m[1])
+		h := ensureThreePrerelease(m[2])
+		return [][]vars.Constraint{{{Op: ">=", Ver: l}, {Op: "<=", Ver: h}}}, nil
 	}
 
 	// OR blocks
@@ -89,7 +87,7 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 			continue
 		}
 		matches := vars.ReNpmToken.FindAllStringSubmatch(b, -1)
-		if matches == nil || len(matches) == 0 {
+		if len(matches) == 0 {
 			continue
 		}
 		var ands []vars.Constraint
@@ -102,7 +100,7 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 			}
 			lowTok := strings.ToLower(token)
 			if strings.HasPrefix(lowTok, "http://") || strings.HasPrefix(lowTok, "https://") || strings.HasPrefix(lowTok, "file:") {
-				return nil, nil, false
+				return nil, vars.ErrUnsupportedSource
 			}
 			// wildcard/star handling
 			if lowTok == "latest" {
@@ -128,13 +126,13 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 				} else {
 					lower = token
 				}
-				lower = ensureThree(lower)
+				lower = ensureThreePrerelease(lower)
 				ands = append(ands, vars.Constraint{Op: ">=", Ver: lower})
 				ands = append(ands, vars.Constraint{Op: "<", Ver: inc(lower, "minor")})
 			case "^":
 				// caret semantics:
 				nums := splitVersionNumsLegacy(token)
-				lower := ensureThree(token)
+				lower := ensureThreePrerelease(token)
 				var upper string
 				if nums[0] > 0 {
 					upper = fmt.Sprintf("%d.0.0", nums[0]+1)
@@ -152,9 +150,9 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 					ands = append(ands, exp...)
 				} else {
 					if op == "" {
-						ands = append(ands, vars.Constraint{Op: "=", Ver: ensureThree(token)})
+						ands = append(ands, vars.Constraint{Op: "=", Ver: ensureThreePrerelease(token)})
 					} else {
-						ands = append(ands, vars.Constraint{Op: op, Ver: ensureThree(token)})
+						ands = append(ands, vars.Constraint{Op: op, Ver: ensureThreePrerelease(token)})
 					}
 				}
 			}
@@ -164,8 +162,7 @@ func ParseNPM(s string) ([][]vars.Constraint, []string, bool) {
 		}
 	} // end blocks
 	if len(out) == 0 {
-		// could not parse into constraints, but it is valid input - return empty parse
-		return [][]vars.Constraint{}, nil, true
+		return [][]vars.Constraint{}, nil
 	}
-	return out, nil, true
+	return out, nil
 }

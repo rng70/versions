@@ -26,30 +26,6 @@ func inc(version string, part string) string {
 	}
 }
 
-func legacyCmpVersion(a, b string) int {
-	aa := splitVersionNumsLegacy(a)
-	bb := splitVersionNumsLegacy(b)
-	n := len(aa)
-	if len(bb) > n {
-		n = len(bb)
-	}
-	for len(aa) < n {
-		aa = append(aa, 0)
-	}
-	for len(bb) < n {
-		bb = append(bb, 0)
-	}
-	for i := 0; i < n; i++ {
-		if aa[i] < bb[i] {
-			return -1
-		}
-		if aa[i] > bb[i] {
-			return 1
-		}
-	}
-	return 0
-}
-
 func ensureThree(v string) string {
 	nums, suffix := splitVersionNums(v)
 	base := fmt.Sprintf("%d.%d.%d", nums[0], nums[1], nums[2])
@@ -60,17 +36,22 @@ func ensureThree(v string) string {
 	return base
 }
 
-func isNumericVersion(s string) bool {
-	if s == "" {
-		return false
+// ensureThreePrerelease is like ensureThree but preserves a full SemVer-style
+// pre-release suffix (e.g. "-preview.1.24081.5").
+// ensureThree alone truncates such suffixes because splitVersionNums stops at
+// the first non-digit character inside a segment.
+func ensureThreePrerelease(v string) string {
+	if idx := strings.Index(v, "-"); idx >= 0 {
+		return ensureThree(v[:idx]) + v[idx:]
 	}
-	for _, r := range s {
-		if !(r == '.' || (r >= '0' && r <= '9')) {
-			return false
-		}
-	}
-	return true
+	return ensureThree(v)
 }
+
+// isBareVersion returns true when s is a bare version string with no leading
+// operator — e.g. "9.0.0", "9.0", "9", or "9.0.0-preview.1.24081.5".
+var reBareVersion = regexp.MustCompile(`^[0-9]+(?:\.[0-9]+)*(?:-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)?$`)
+
+func isBareVersion(s string) bool { return reBareVersion.MatchString(s) }
 
 // Expand "==1.2.*" into >=1.2.0 <1.3.0
 func pyExpandWildcardEq(v string) []vars.Constraint {
@@ -81,14 +62,39 @@ func pyExpandWildcardEq(v string) []vars.Constraint {
 		upper := fmt.Sprintf("%d.%d.0", nums[0], nums[1]+1)
 		return []vars.Constraint{{Op: ">=", Ver: ensureThree(lower)}, {Op: "<", Ver: ensureThree(upper)}}
 	}
-	return []vars.Constraint{{Op: "=", Ver: ensureThree(v)}}
+	return []vars.Constraint{{Op: "=", Ver: ensureThreePrerelease(v)}}
 }
 
+// parsedConstraint holds a pre-parsed constraint to avoid repeated parsing.
+type parsedConstraint struct {
+	op  string
+	ver canonicalized.Version
+	raw string // original Ver string for "latest" check
+}
+
+// FilterMatches returns the subset of versions that satisfy at least one
+// constraint group. Versions and constraints are parsed once upfront.
 func FilterMatches(parsed [][]vars.Constraint, versions []string) []string {
+	// Pre-parse all constraint versions once.
+	groups := make([][]parsedConstraint, len(parsed))
+	for i, ands := range parsed {
+		pg := make([]parsedConstraint, len(ands))
+		for j, c := range ands {
+			pg[j] = parsedConstraint{op: c.Op, raw: c.Ver, ver: canonicalized.NewVersion(c.Ver)}
+		}
+		groups[i] = pg
+	}
+
+	// Pre-parse all candidate versions once.
+	pvs := make([]canonicalized.Version, len(versions))
+	for i, v := range versions {
+		pvs[i] = canonicalized.NewVersion(v)
+	}
+
 	var out []string
-	for _, v := range versions {
-		for _, group := range parsed {
-			if satisfiesOne(v, group) {
+	for i, v := range versions {
+		for _, group := range groups {
+			if satisfiesParsed(&pvs[i], v, group) {
 				out = append(out, v)
 				break
 			}
@@ -97,42 +103,59 @@ func FilterMatches(parsed [][]vars.Constraint, versions []string) []string {
 	return out
 }
 
-func legacySatisfiesOne(v string, ands []vars.Constraint) bool {
-	// If any constraint is "latest", it only matches literal "latest"
+// satisfiesParsed checks whether the pre-parsed version pv (original string v)
+// satisfies every constraint in the AND group.
+func satisfiesParsed(pv *canonicalized.Version, v string, ands []parsedConstraint) bool {
 	for _, c := range ands {
-		if c.Ver == "latest" {
+		if c.raw == "latest" {
 			return v == "latest"
 		}
 	}
-	// Check numeric constraints
 	for _, c := range ands {
-		// if constraint value is not numeric-like, fail (except "latest" handled above)
-		if c.Ver == "" {
+		if c.raw == "" {
 			return false
 		}
-		switch c.Op {
+		cc := c.ver // local copy so we can take address
+		switch c.op {
 		case "=":
-			if legacyCmpVersion(v, c.Ver) != 0 {
+			if !pv.Equal(&cc) {
 				return false
 			}
 		case "!=":
-			if legacyCmpVersion(v, c.Ver) == 0 {
+			if pv.Equal(&cc) {
 				return false
 			}
 		case "<":
-			if !(legacyCmpVersion(v, c.Ver) < 0) {
+			if !pv.LessThan(&cc) {
 				return false
 			}
 		case "<=":
-			if !(legacyCmpVersion(v, c.Ver) <= 0) {
+			if !pv.LessThanOrEqual(&cc) {
 				return false
 			}
 		case ">":
-			if !(legacyCmpVersion(v, c.Ver) > 0) {
+			if !pv.GreaterThan(&cc) {
 				return false
 			}
 		case ">=":
-			if !(legacyCmpVersion(v, c.Ver) >= 0) {
+			if !pv.GreaterThanOrEqual(&cc) {
+				return false
+			}
+		case "<core":
+			// Compare only major.minor.patch (ignore pre-release), used for compatible-release upper bound
+			g := func(p *int64) int64 {
+				if p == nil {
+					return 0
+				}
+				return *p
+			}
+			vMaj, cMaj := g(pv.Major), g(cc.Major)
+			vMin, cMin := g(pv.Minor), g(cc.Minor)
+			vPat, cPat := g(pv.Patch), g(cc.Patch)
+			coreNotLess := vMaj > cMaj ||
+				(vMaj == cMaj && vMin > cMin) ||
+				(vMaj == cMaj && vMin == cMin && vPat >= cPat)
+			if coreNotLess {
 				return false
 			}
 		default:
@@ -140,46 +163,6 @@ func legacySatisfiesOne(v string, ands []vars.Constraint) bool {
 		}
 	}
 	return true
-}
-
-func satisfiesOne(v string, ands []vars.Constraint) bool {
-	// If any constraint is "latest", it only matches literal "latest"
-	for _, c := range ands {
-		if c.Ver == "latest" {
-			return v == "latest"
-		}
-	}
-
-	canonicalizedV := canonicalized.NewVersion(v)
-
-	// Check numeric constraints
-	result := true
-	for _, c := range ands {
-		// if constraint value is not numeric-like, fail (except "latest" handled above)
-		if c.Ver == "" {
-			return false
-		}
-
-		canonicalizedC := canonicalized.NewVersion(c.Ver)
-		switch c.Op {
-		case "=":
-			result = result && canonicalizedV.Equal(&canonicalizedC)
-		case "!=":
-			result = result && !canonicalizedV.Equal(&canonicalizedC)
-		case "<":
-			result = result && canonicalizedV.LessThan(&canonicalizedC)
-		case "<=":
-			result = result && canonicalizedV.LessThanOrEqual(&canonicalizedC)
-		case ">":
-			result = result && canonicalizedV.GreaterThan(&canonicalizedC)
-		case ">=":
-			result = result && canonicalizedV.GreaterThanOrEqual(&canonicalizedC)
-		default:
-			result = result && false
-		}
-	}
-
-	return result
 }
 
 func splitVersionNumsLegacy(v string) []int {
@@ -250,9 +233,15 @@ func splitVersionNums(v string) ([]int, string) {
 		n, _ := strconv.Atoi(p[:i])
 		nums = append(nums, n)
 
-		// Capture inline suffix like 3Final
+		// Capture inline suffix like 3Final, including any remaining dot-separated parts
 		if i < len(p) {
-			suffix = p[i:]
+			rest := p[i:]
+			remainParts := parts[idx+1:]
+			if len(remainParts) > 0 {
+				suffix = rest + "." + strings.Join(remainParts, ".")
+			} else {
+				suffix = rest
+			}
 			break
 		}
 	}

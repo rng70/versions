@@ -268,6 +268,32 @@ func TestSortedVersions_SafeParse_False_KeepsNamed(t *testing.T) {
 	}
 }
 
+func TestSortedVersions_SafeParse_True_KeepsNamed(t *testing.T) {
+	input := []string{
+		"v1.0.0",
+		"reservation",
+		"refs/heads/smallish-refactor",
+		"2.0.0",
+	}
+	result := SortedVersions(input, false, true) // desc=false, safeParse=true
+	if len(result) != 2 {
+		t.Errorf("safeParse=true should filter named-only, got %d: %v", len(result), result)
+	}
+}
+
+func TestSortedVersions_SafeParse_True_Desc_True_KeepsNamed(t *testing.T) {
+	input := []string{
+		"v1.0.0",
+		"reservation",
+		"refs/heads/smallish-refactor",
+		"2.0.0",
+	}
+	result := SortedVersions(input, true, true) // desc=true, safeParse=true
+	if len(result) != 2 {
+		t.Errorf("safeParse=true should filter named-only, got %d: %v", len(result), result)
+	}
+}
+
 func TestSortedParsedVersions_SafeParse_DefaultTrue_FiltersNamed(t *testing.T) {
 	input := []string{"1.0.0", "reservation", "refs/heads/main", "2.0.0"}
 	vs := SortedParsedVersions(input)

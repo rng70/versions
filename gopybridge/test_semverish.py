@@ -274,6 +274,13 @@ class TestAnalyzeConstraints:
         assert "1.2.0" in result
         assert "2.9.0" in result
 
+    def test_npm_gte_lte_is_or_not_and(self):
+        # The npm parser treats ">=a <=b" as OR (each condition independently),
+        # so versions satisfying either side are matched — use hyphen range for AND.
+        result = analyze_constraints("npm", ">=1.2.0 <=2.9.0", ["1.1.0", "1.2.0", "2.9.0", "3.0.0"])
+        assert "3.0.0" in result   # matches >=1.2.0 due to OR semantics
+        assert "1.1.0" not in result  # below both bounds
+
     def test_py_alias_same_as_python(self):
         versions = ["1.0.0", "2.0.0", "3.0.0"]
         constraint = ">=2.0.0"

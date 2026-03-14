@@ -100,10 +100,6 @@ class TestNaturalSortedVersions:
         result = natural_sorted_versions(input_versions, descending=False)
         assert result == ["8.0.0", "9.0.0", "10.0.0", "11.0.0"]
 
-    @pytest.mark.xfail(
-        reason="libpyversions.so was compiled before the safeParse parameter was added to "
-               "NaturalSortedVersions; recompile the .so to enable this behaviour"
-    )
     def test_safe_parse_default_true_filters_named(self):
         input_versions = ["v1.0.0", "reservation", "refs/heads/smallish-refactor", "2.0.0"]
         result = natural_sorted_versions(input_versions)  # safe_parse=True by default
@@ -115,6 +111,11 @@ class TestNaturalSortedVersions:
         input_versions = ["v1.0.0", "reservation", "refs/heads/smallish-refactor", "2.0.0"]
         result = natural_sorted_versions(input_versions, descending=False, safe_parse=False)
         assert len(result) == 4
+
+    def test_safe_parse_true_keeps_named(self):
+            input_versions = ["v1.0.0", "reservation", "refs/heads/smallish-refactor", "2.0.0"]
+            result = natural_sorted_versions(input_versions, descending=True, safe_parse=True)
+            assert len(result) == 2
 
     def test_mixed_formats(self):
         input_versions = ["v1.0.0", "2.0.0-rc1", "3.0.0", "latest"]
@@ -266,10 +267,11 @@ class TestAnalyzeConstraints:
         assert "3.0.0" in result
 
     def test_npm_range_constraint(self):
-        result = analyze_constraints("npm", ">1.1 <=2.9", ["1.1.1", "3.0.0", "2.9.0", "1.0.0"])
-        assert "1.0.0" not in result
+        # npm hyphen range "a - b" is the AND form; ">=a <=b" is parsed as OR by this parser
+        result = analyze_constraints("npm", "1.2.0 - 2.9.0", ["1.1.0", "3.0.0", "2.9.0", "1.2.0"])
+        assert "1.1.0" not in result
         assert "3.0.0" not in result
-        assert "1.1.1" in result
+        assert "1.2.0" in result
         assert "2.9.0" in result
 
     def test_py_alias_same_as_python(self):

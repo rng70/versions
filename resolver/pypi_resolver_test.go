@@ -79,6 +79,12 @@ func TestPython_BareVersion(t *testing.T) {
 	assertMatches(t, a, []string{"2.3.1"})
 }
 
+func TestPython_BareVersion_Exact(t *testing.T) {
+	a := AnalyzeConstraint(vars.StylePy, "= 2.3.1", PyPITestVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"2.3.1"})
+}
+
 func TestPython_BareVersion_Missing(t *testing.T) {
 	a := AnalyzeConstraint(vars.StylePy, "2.3.2", PyPITestVersions)
 	assertParsedCount(t, a, 1)

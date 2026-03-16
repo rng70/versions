@@ -48,6 +48,12 @@ func TestMaven_PreRelease(t *testing.T) {
 	assertMatches(t, a, wantPreRelease)
 }
 
+func TestMaven_Exact(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleMaven, "= 10.0.1", vars.TestVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"10.0.1"})
+}
+
 func TestMaven_BareExact(t *testing.T) {
 	a := AnalyzeConstraint(vars.StyleMaven, "10.0.1", vars.TestVersions)
 	assertParsedCount(t, a, 1)

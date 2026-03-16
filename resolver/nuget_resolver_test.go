@@ -199,6 +199,12 @@ func TestNuGet_PreRelease(t *testing.T) {
 	assertMatches(t, a, wantPreRelease)
 }
 
+func TestNuGet_Exact(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleNuGet, "= 10.0.1", NugetTestVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"10.0.1"})
+}
+
 func TestNuGet_BareExact(t *testing.T) {
 	a := AnalyzeConstraint(vars.StyleNuGet, "10.0.1", NugetTestVersions)
 	assertParsedCount(t, a, 1)

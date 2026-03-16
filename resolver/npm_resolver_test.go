@@ -90,6 +90,12 @@ func TestNPM_PreRelease(t *testing.T) {
 	assertMatches(t, a, wantPreRelease)
 }
 
+func TestNPM_Exact(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleNPM, "= 10.0.1", vars.TestVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"10.0.1"})
+}
+
 func TestNPM_BareExact(t *testing.T) {
 	a := AnalyzeConstraint(vars.StyleNPM, "10.0.1", vars.TestVersions)
 	assertParsedCount(t, a, 1)

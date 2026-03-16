@@ -48,6 +48,12 @@ func TestGo_PreRelease(t *testing.T) {
 	assertMatches(t, a, wantPreRelease)
 }
 
+func TestGo_Exact(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleGo, "= v10.0.1", vars.TestVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"10.0.1"})
+}
+
 func TestGo_BareExact(t *testing.T) {
 	a := AnalyzeConstraint(vars.StyleGo, "10.0.1", vars.TestVersions)
 	assertParsedCount(t, a, 1)

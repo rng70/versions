@@ -114,6 +114,19 @@ func TestEnsureThreePrerelease_RCDots(t *testing.T) {
 	}
 }
 
+func TestEnsureThreePrerelease_QualifierBeforePatch(t *testing.T) {
+	// "2.0.M1" → qualifier must be kept, not collapsed into patch 0
+	if got := ensureThreePrerelease("2.0.M1"); got != "2.0.0.M1" {
+		t.Errorf("got %q, want %q", got, "2.0.0.M1")
+	}
+}
+
+func TestEnsureThreePrerelease_MavenQualifierAndSnapshot(t *testing.T) {
+	if got := ensureThreePrerelease("4.1.114.Final-SNAPSHOT"); got != "4.1.114.Final-SNAPSHOT" {
+		t.Errorf("got %q, want %q", got, "4.1.114.Final-SNAPSHOT")
+	}
+}
+
 // ─── isBareVersion ────────────────────────────────────────────────────────────
 
 func TestIsBareVersion_SimpleThreePart(t *testing.T) {
@@ -143,6 +156,30 @@ func TestIsBareVersion_WithPrerelease(t *testing.T) {
 func TestIsBareVersion_WithPrereleaseDots(t *testing.T) {
 	if !isBareVersion("9.0.0-preview.1.24081.5") {
 		t.Error("9.0.0-preview.1.24081.5 should be a bare version")
+	}
+}
+
+func TestIsBareVersion_MavenFinal(t *testing.T) {
+	if !isBareVersion("4.1.114.Final") {
+		t.Error("4.1.114.Final should be a bare version")
+	}
+}
+
+func TestIsBareVersion_MavenQualifierBeforePatch(t *testing.T) {
+	if !isBareVersion("2.0.M1") {
+		t.Error("2.0.M1 should be a bare version")
+	}
+}
+
+func TestIsBareVersion_MavenQualifierAndSnapshot(t *testing.T) {
+	if !isBareVersion("5.3.0.RELEASE-SNAPSHOT") {
+		t.Error("5.3.0.RELEASE-SNAPSHOT should be a bare version")
+	}
+}
+
+func TestIsBareVersion_TrailingDot(t *testing.T) {
+	if isBareVersion("1.2.3.") {
+		t.Error("1.2.3. should not be a bare version")
 	}
 }
 
@@ -310,6 +347,22 @@ func TestSplitVersionNums_InlineAlphaSuffix(t *testing.T) {
 	}
 }
 
+func TestSplitVersionNums_QualifierBeforePatch(t *testing.T) {
+	nums, suffix := splitVersionNums("2.0.M1")
+	assertLegacyNums(t, nums, 2, 0, 0)
+	if suffix != ".M1" {
+		t.Errorf("suffix: got %q, want %q", suffix, ".M1")
+	}
+}
+
+func TestSplitVersionNums_QualifierAfterMajor(t *testing.T) {
+	nums, suffix := splitVersionNums("4.Final")
+	assertLegacyNums(t, nums, 4, 0, 0)
+	if suffix != ".Final" {
+		t.Errorf("suffix: got %q, want %q", suffix, ".Final")
+	}
+}
+
 func TestSplitVersionNums_BuildMetadataStripped(t *testing.T) {
 	nums, _ := splitVersionNums("1.2.3+build")
 	assertLegacyNums(t, nums, 1, 2, 3)
@@ -443,6 +496,26 @@ func TestConstraintToRange_GtAndLte(t *testing.T) {
 	}
 	if got != "(1.0.0, 2.0.0]" {
 		t.Errorf("got %q, want %q", got, "(1.0.0, 2.0.0]")
+	}
+}
+
+func TestConstraintToRange_MavenQualifierLte(t *testing.T) {
+	got, err := ConstraintToRange("<= 4.1.114.Final")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "[, 4.1.114.Final]" {
+		t.Errorf("got %q, want %q", got, "[, 4.1.114.Final]")
+	}
+}
+
+func TestConstraintToRange_MavenQualifierRange(t *testing.T) {
+	got, err := ConstraintToRange(">= 5.0.0.RELEASE, < 5.3.1.RELEASE")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "[5.0.0.RELEASE, 5.3.1.RELEASE)" {
+		t.Errorf("got %q, want %q", got, "[5.0.0.RELEASE, 5.3.1.RELEASE)")
 	}
 }
 
@@ -1107,6 +1180,26 @@ func TestParseNuGet_ExactBracketPrerelease(t *testing.T) {
 	}
 }
 
+func TestParseNuGet_OperatorQualifier(t *testing.T) {
+	cs, err := ParseNuGet("<= 4.1.114.Final")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cs) != 1 || len(cs[0]) != 1 || cs[0][0].Op != "<=" || cs[0][0].Ver != "4.1.114.Final" {
+		t.Errorf("<= qualifier: got %v", cs)
+	}
+}
+
+func TestParseNuGet_ExactBracketQualifier(t *testing.T) {
+	cs, err := ParseNuGet("[4.1.114.Final]")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cs) != 1 || cs[0][0].Op != "=" || cs[0][0].Ver != "4.1.114.Final" {
+		t.Errorf("[exact-qualifier]: got %v", cs)
+	}
+}
+
 // ─── ParseRuby ────────────────────────────────────────────────────────────────
 
 func TestParseRuby_Empty(t *testing.T) {
@@ -1561,6 +1654,59 @@ func TestParseMaven_OperatorRange(t *testing.T) {
 	}
 	if len(cs) != 1 || len(cs[0]) != 2 {
 		t.Fatalf("range: expected 1 group with 2 constraints, got %v", cs)
+	}
+}
+
+func TestParseMaven_OperatorQualifier(t *testing.T) {
+	cs, err := ParseMaven("<= 4.1.114.Final")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cs) != 1 || len(cs[0]) != 1 || cs[0][0].Op != "<=" || cs[0][0].Ver != "4.1.114.Final" {
+		t.Errorf("<= qualifier: got %v", cs)
+	}
+}
+
+func TestParseMaven_OperatorRangeQualifier(t *testing.T) {
+	cs, err := ParseMaven(">= 4.1.0.Final, <= 4.1.114.Final")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cs) != 1 || len(cs[0]) != 2 {
+		t.Fatalf("range: expected 1 group with 2 constraints, got %v", cs)
+	}
+	if cs[0][0].Op != ">=" || cs[0][1].Op != "<=" {
+		t.Errorf("range: ops: got %s/%s, want >=/<=", cs[0][0].Op, cs[0][1].Op)
+	}
+}
+
+func TestParseMaven_ExactBracketQualifier(t *testing.T) {
+	cs, err := ParseMaven("[4.1.114.Final]")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cs) != 1 || cs[0][0].Op != "=" || cs[0][0].Ver != "4.1.114.Final" {
+		t.Errorf("[exact-qualifier]: got %v", cs)
+	}
+}
+
+func TestParseMaven_BareQualifier(t *testing.T) {
+	cs, err := ParseMaven("4.1.114.Final")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cs) != 1 || cs[0][0].Op != "=" || cs[0][0].Ver != "4.1.114.Final" {
+		t.Errorf("bare qualifier: got %v", cs)
+	}
+}
+
+func TestParseMaven_BareQualifierBeforePatch(t *testing.T) {
+	cs, err := ParseMaven("2.0.M1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cs) != 1 || cs[0][0].Op != "=" || cs[0][0].Ver != "2.0.0.M1" {
+		t.Errorf("bare qualifier before patch: got %v", cs)
 	}
 }
 

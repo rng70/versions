@@ -17,11 +17,11 @@ var (
 		`^(\[|\()\s*[^,]*\s*,\s*[^,\]]*\s*(\]|\))$`,
 	)
 
-	// singleConstraintPattern accepts an optional SemVer pre-release suffix
-	// (e.g. "-preview.1.24081.5") so that constraints like
-	// ">= 9.0.0-preview.1.24081.5" are recognised.
+	// singleConstraintPattern accepts an optional qualifier suffix
+	// (e.g. "-preview.1.24081.5" or ".Final") so that constraints like
+	// ">= 9.0.0-preview.1.24081.5" or "<= 4.1.114.Final" are recognised.
 	singleConstraintPattern = regexp.MustCompile(
-		`^(<=|>=|<|>|=)\s*([0-9]+(?:\.[0-9]+)*(?:-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)?)$`,
+		`^(<=|>=|<|>|=)\s*(` + versionPattern + `)$`,
 	)
 )
 
@@ -105,7 +105,7 @@ func buildRange(lower, upper *bound) string {
 }
 
 // reNuGetExact matches an exact-bracket constraint like [1.2.3] or [1.2.3-rc.1].
-var reNuGetExact = regexp.MustCompile(`^\s*\[\s*([0-9]+(?:\.[0-9]+)*(?:-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)?)\s*\]\s*$`)
+var reNuGetExact = regexp.MustCompile(`^\s*\[\s*(` + versionPattern + `)\s*\]\s*$`)
 
 func ParseNuGet(s string) ([][]vars.Constraint, error) {
 	s = strings.TrimSpace(s)

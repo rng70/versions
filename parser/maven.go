@@ -11,8 +11,8 @@ import (
 /*      Maven parser         */
 /* ------------------------- */
 
-// reMavenExact matches a single exact version in brackets: [1.2.3] or [1.2.3-rc.1]
-var reMavenExact = regexp.MustCompile(`^\s*\[\s*([0-9]+(?:\.[0-9]+)*(?:-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)?)\s*\]\s*$`)
+// reMavenExact matches a single exact version in brackets: [1.2.3], [1.2.3-rc.1] or [1.2.3.Final]
+var reMavenExact = regexp.MustCompile(`^\s*\[\s*(` + versionPattern + `)\s*\]\s*$`)
 
 func ParseMaven(s string) ([][]vars.Constraint, error) {
 	s = strings.TrimSpace(s)

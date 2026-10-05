@@ -47,9 +47,14 @@ func ensureThreePrerelease(v string) string {
 	return ensureThree(v)
 }
 
+// versionPattern matches a numeric version with optional qualifiers separated by
+// "-" or "." — e.g. "9.0.0-preview.1.24081.5" (SemVer style) or
+// "4.1.114.Final", "5.3.0.RELEASE-SNAPSHOT" (Maven style).
+const versionPattern = `[0-9]+(?:\.[0-9]+)*(?:[-.][A-Za-z0-9]+)*`
+
 // isBareVersion returns true when s is a bare version string with no leading
-// operator — e.g. "9.0.0", "9.0", "9", or "9.0.0-preview.1.24081.5".
-var reBareVersion = regexp.MustCompile(`^[0-9]+(?:\.[0-9]+)*(?:-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)?$`)
+// operator — e.g. "9.0.0", "9.0", "9", "9.0.0-preview.1.24081.5" or "4.1.114.Final".
+var reBareVersion = regexp.MustCompile(`^` + versionPattern + `$`)
 
 func isBareVersion(s string) bool { return reBareVersion.MatchString(s) }
 
@@ -225,9 +230,10 @@ func splitVersionNums(v string) ([]int, string) {
 			i++
 		}
 
+		// A qualifier before the third numeric part (e.g. "2.0.M1") starts the suffix
 		if i == 0 {
-			nums = append(nums, 0)
-			continue
+			suffix = "." + strings.Join(parts[idx:], ".")
+			break
 		}
 
 		n, _ := strconv.Atoi(p[:i])

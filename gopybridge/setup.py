@@ -14,7 +14,7 @@ def read_long_description():
 
 setup(
     name="semverish",
-    version="2.0.1",
+    version="2.0.2",
     author="Al Arafat Tanin",
     author_email="arafat.rng70@gmail.com",
     description=(

@@ -205,6 +205,44 @@ func TestNuGet_Exact(t *testing.T) {
 	assertMatches(t, a, []string{"10.0.1"})
 }
 
+func TestNuGet_QualifierUpperBound(t *testing.T) {
+	// CVE-2024-47535 (io.netty:netty-common) constraint
+	a := AnalyzeConstraint(vars.StyleNuGet, "<= 4.1.114.Final", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.100.Final", "4.1.114.Final", "2.0.M1", "2.0.0"})
+}
+
+func TestNuGet_QualifierRange(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleNuGet, ">= 4.1.0.Final, <= 4.1.114.Final", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.100.Final", "4.1.114.Final"})
+}
+
+func TestNuGet_QualifierExclusiveUpper(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleNuGet, ">= 5.0.0, < 5.3.1.RELEASE", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"5.3.0.RELEASE"})
+}
+
+func TestNuGet_QualifierExactBracket(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleNuGet, "[4.1.114.Final]", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.114.Final"})
+}
+
+func TestNuGet_QualifierBareExact(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleNuGet, "4.1.114.Final", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.114.Final"})
+}
+
+func TestNuGet_QualifierBeforePatchExact(t *testing.T) {
+	// "2.0.M1" must not collapse to "2.0.0"
+	a := AnalyzeConstraint(vars.StyleNuGet, "= 2.0.M1", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"2.0.M1"})
+}
+
 func TestNuGet_BareExact(t *testing.T) {
 	a := AnalyzeConstraint(vars.StyleNuGet, "10.0.1", NugetTestVersions)
 	assertParsedCount(t, a, 1)

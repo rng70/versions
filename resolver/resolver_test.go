@@ -48,6 +48,19 @@ func assertMatchCount(t *testing.T, a vars.Analysis, want int) {
 	}
 }
 
+// qualifiedVersions holds Maven-style versions whose qualifier follows a "."
+// (e.g. netty's "4.1.114.Final"), shared across Maven and NuGet tests.
+var qualifiedVersions = []string{
+	"4.1.100.Final",
+	"4.1.114.Final",
+	"4.1.115.Final",
+	"4.2.0.Final",
+	"5.3.0.RELEASE",
+	"5.3.1.RELEASE",
+	"2.0.M1",
+	"2.0.0",
+}
+
 // preReleaseVersions is shared across per-language pre-release tests.
 var preReleaseVersions = []string{
 	"9.0.0-preview.1.24081.5",

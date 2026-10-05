@@ -54,6 +54,44 @@ func TestMaven_Exact(t *testing.T) {
 	assertMatches(t, a, []string{"10.0.1"})
 }
 
+func TestMaven_QualifierUpperBound(t *testing.T) {
+	// CVE-2024-47535 (io.netty:netty-common) constraint
+	a := AnalyzeConstraint(vars.StyleMaven, "<= 4.1.114.Final", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.100.Final", "4.1.114.Final", "2.0.M1", "2.0.0"})
+}
+
+func TestMaven_QualifierRange(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleMaven, ">= 4.1.0.Final, <= 4.1.114.Final", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.100.Final", "4.1.114.Final"})
+}
+
+func TestMaven_QualifierExclusiveUpper(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleMaven, ">= 5.0.0, < 5.3.1.RELEASE", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"5.3.0.RELEASE"})
+}
+
+func TestMaven_QualifierExactBracket(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleMaven, "[4.1.114.Final]", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.114.Final"})
+}
+
+func TestMaven_QualifierBareExact(t *testing.T) {
+	a := AnalyzeConstraint(vars.StyleMaven, "4.1.114.Final", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"4.1.114.Final"})
+}
+
+func TestMaven_QualifierBeforePatchExact(t *testing.T) {
+	// "2.0.M1" must not collapse to "2.0.0"
+	a := AnalyzeConstraint(vars.StyleMaven, "= 2.0.M1", qualifiedVersions)
+	assertParsedCount(t, a, 1)
+	assertMatches(t, a, []string{"2.0.M1"})
+}
+
 func TestMaven_BareExact(t *testing.T) {
 	a := AnalyzeConstraint(vars.StyleMaven, "10.0.1", vars.TestVersions)
 	assertParsedCount(t, a, 1)
